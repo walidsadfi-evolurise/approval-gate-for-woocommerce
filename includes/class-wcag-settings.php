@@ -21,15 +21,15 @@ class WCAG_Settings {
 	 */
 	public static function defaults() {
 		return array(
-			'gated_keys'       => array(),                               // WooCommerce key IDs in proposal mode.
-			'header_opt_in'    => 1,                                     // Any key may send X-WC-Approval: propose.
-			'resources'        => array( 'orders', 'products', 'customers', 'coupons', 'settings', 'webhooks', 'shipping', 'taxes' ),
-			'expire_days'      => 7,
-			'decision_url'     => '',
-			'decision_token'   => '',
-			'notify_email'     => '',
-			'notify_on_new'    => 1,
-			'retention_days'   => 90,
+			'gated_keys'     => array(),                               // WooCommerce key IDs in proposal mode.
+			'header_opt_in'  => 1,                                     // Any key may send X-WC-Approval: propose.
+			'resources'      => array( 'orders', 'products', 'customers', 'coupons', 'settings', 'webhooks', 'shipping', 'taxes' ),
+			'expire_days'    => 7,
+			'decision_url'   => '',
+			'decision_token' => '',
+			'notify_email'   => '',
+			'notify_on_new'  => 1,
+			'retention_days' => 90,
 		);
 	}
 

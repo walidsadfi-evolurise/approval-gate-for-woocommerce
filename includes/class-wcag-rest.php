@@ -81,7 +81,7 @@ class WCAG_Rest {
 			return 0;
 		}
 		$key = WCAG_Store::wc_key_by_consumer_key( $ck );
-		return $key && (int) $key->user_id === get_current_user_id() ? (int) $key->key_id : 0;
+		return $key && get_current_user_id() === (int) $key->user_id ? (int) $key->key_id : 0;
 	}
 
 	/**
@@ -94,7 +94,7 @@ class WCAG_Rest {
 		if ( current_user_can( 'manage_woocommerce' ) && 0 === self::current_key_id() ) {
 			return true;
 		}
-		return (int) $row->key_id === self::current_key_id();
+		return self::current_key_id() === (int) $row->key_id;
 	}
 
 	/**

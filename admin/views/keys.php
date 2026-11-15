@@ -36,14 +36,31 @@ $wcag_keys     = WCAG_Store::wc_keys();
 		<?php foreach ( $wcag_keys as $wcag_k ) : ?>
 			<?php
 			$wcag_u = get_user_by( 'id', $wcag_k->user_id );
-			$wcag_n = WCAG_Store::query( array( 'key_id' => (int) $wcag_k->key_id, 'per_page' => 1 ) )['total'];
+			$wcag_n = WCAG_Store::query(
+				array(
+					'key_id'   => (int) $wcag_k->key_id,
+					'per_page' => 1,
+				)
+			)['total'];
 			?>
 			<tr>
 				<td><label><input type="checkbox" name="gated_keys[]" value="<?php echo (int) $wcag_k->key_id; ?>" <?php checked( in_array( (int) $wcag_k->key_id, $wcag_gated, true ) ); ?> <?php disabled( 'read' === $wcag_k->permissions ); ?> /> <?php echo in_array( (int) $wcag_k->key_id, $wcag_gated, true ) ? esc_html__( 'on', 'approval-gate-for-woocommerce' ) : ''; ?></label></td>
 				<td><strong><?php echo esc_html( $wcag_k->description ); ?></strong> <span style="color:#888">#<?php echo (int) $wcag_k->key_id; ?> · <?php echo esc_html( $wcag_k->truncated_key ); ?></span></td>
 				<td><?php echo $wcag_u ? esc_html( $wcag_u->display_name ) : '—'; ?></td>
-				<td><?php echo esc_html( $wcag_k->permissions ); ?><?php if ( 'read' === $wcag_k->permissions ) : ?> <span style="color:#888">(<?php esc_html_e( 'cannot write anyway', 'approval-gate-for-woocommerce' ); ?>)</span><?php endif; ?></td>
-				<td><?php if ( $wcag_n ) : ?><a href="<?php echo esc_url( admin_url( 'admin.php?page=wcag&tab=history&key_id=' . (int) $wcag_k->key_id ) ); ?>"><?php echo (int) $wcag_n; ?></a><?php else : ?>0<?php endif; ?></td>
+				<td><?php echo esc_html( $wcag_k->permissions ); ?>
+				<?php
+				if ( 'read' === $wcag_k->permissions ) :
+					?>
+					<span style="color:#888">(<?php esc_html_e( 'cannot write anyway', 'approval-gate-for-woocommerce' ); ?>)</span><?php endif; ?></td>
+				<td>
+				<?php
+				if ( $wcag_n ) :
+					?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wcag&tab=history&key_id=' . (int) $wcag_k->key_id ) ); ?>"><?php echo (int) $wcag_n; ?></a>
+					<?php
+else :
+	?>
+					0<?php endif; ?></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>

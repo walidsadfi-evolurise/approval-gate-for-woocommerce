@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * wp wc approval-gate <command>
+ * WP-CLI commands: wp wc approval-gate <command>.
  */
 class WCAG_CLI {
 

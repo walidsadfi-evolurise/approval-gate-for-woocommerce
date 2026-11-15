@@ -38,13 +38,29 @@ class WCAG_Decision {
 			return new WP_Error( 'wcag_not_pending', sprintf( 'Proposal is %s.', $row->status ) );
 		}
 		if ( $row->expires_at && strtotime( $row->expires_at . ' UTC' ) < time() ) {
-			WCAG_Store::update( $id, array( 'status' => 'expired', 'decided_at' => current_time( 'mysql', true ) ) );
+			WCAG_Store::update(
+				$id,
+				array(
+					'status'     => 'expired',
+					'decided_at' => current_time( 'mysql', true ),
+				)
+			);
 			return new WP_Error( 'wcag_expired', 'Proposal has expired.' );
 		}
 
 		$key = WCAG_Store::wc_key( (int) $row->key_id );
 		if ( ! $key ) {
-			WCAG_Store::update( $id, array( 'status' => 'failed', 'decided_by' => (int) $by, 'decided_at' => current_time( 'mysql', true ), 'decision_note' => $note, 'result_code' => 0, 'result_body' => 'API key was deleted.' ) );
+			WCAG_Store::update(
+				$id,
+				array(
+					'status'        => 'failed',
+					'decided_by'    => (int) $by,
+					'decided_at'    => current_time( 'mysql', true ),
+					'decision_note' => $note,
+					'result_code'   => 0,
+					'result_body'   => 'API key was deleted.',
+				)
+			);
 			return new WP_Error( 'wcag_no_key', 'The API key that proposed this change has been deleted.' );
 		}
 		if ( 'read' === $key->permissions ) {
@@ -53,7 +69,17 @@ class WCAG_Decision {
 
 		$user = get_user_by( 'id', (int) $row->user_id );
 		if ( ! $user ) {
-			WCAG_Store::update( $id, array( 'status' => 'failed', 'decided_by' => (int) $by, 'decided_at' => current_time( 'mysql', true ), 'decision_note' => $note, 'result_code' => 0, 'result_body' => 'Key owner no longer exists.' ) );
+			WCAG_Store::update(
+				$id,
+				array(
+					'status'        => 'failed',
+					'decided_by'    => (int) $by,
+					'decided_at'    => current_time( 'mysql', true ),
+					'decision_note' => $note,
+					'result_code'   => 0,
+					'result_body'   => 'Key owner no longer exists.',
+				)
+			);
 			return new WP_Error( 'wcag_no_user', 'The user owning the API key no longer exists.' );
 		}
 
@@ -161,7 +187,7 @@ class WCAG_Decision {
 	 * @return int
 	 */
 	public static function expire() {
-		$n = WCAG_Store::expire_due();
+		$n    = WCAG_Store::expire_due();
 		$days = (int) WCAG_Settings::get( 'retention_days' );
 		WCAG_Store::purge( $days );
 		return $n;

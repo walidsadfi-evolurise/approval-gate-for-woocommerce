@@ -55,8 +55,8 @@ class WCAG_Gate {
 		if ( ! empty( $_GET['oauth_consumer_key'] ) ) {
 			return (string) wp_unslash( $_GET['oauth_consumer_key'] );
 		}
-		if ( ! empty( $_POST['oauth_consumer_key'] ) ) {
-			return (string) wp_unslash( $_POST['oauth_consumer_key'] );
+		if ( ! empty( $_POST['oauth_consumer_key'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- OAuth 1.0a consumer key, authenticated by WooCommerce before this runs.
+			return (string) wp_unslash( $_POST['oauth_consumer_key'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		}
 		// phpcs:enable
 		return '';
@@ -87,6 +87,39 @@ class WCAG_Gate {
 	}
 
 	/**
+	 * Is this the request the client actually sent, as opposed to an internal rest_do_request()?
+	 *
+	 * WordPress and WooCommerce Admin dispatch nested REST requests from server-side code (for
+	 * example analytics indicators while routes register). Those are not something the API client
+	 * asked for, so the policy applies to the top-level request only. Sub-requests of the core
+	 * batch endpoint are the exception: there the client did ask for each of them.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public static function is_primary_request( $request ) {
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		if ( '' === $uri ) {
+			return true; // No HTTP context (CLI, cron): nothing to compare against.
+		}
+		$route = untrailingslashit( $request->get_route() );
+		$path  = untrailingslashit( (string) wp_parse_url( $uri, PHP_URL_PATH ) );
+		if ( '' !== $route && substr( $path, -strlen( $route ) ) === $route ) {
+			return true;
+		}
+		$query = array();
+		wp_parse_str( (string) wp_parse_url( $uri, PHP_URL_QUERY ), $query );
+		if ( isset( $query['rest_route'] ) && untrailingslashit( (string) $query['rest_route'] ) === $route ) {
+			return true;
+		}
+		// Nested requests of /batch/v1 carry the client's own operations.
+		if ( substr( $path, -9 ) === '/batch/v1' || ( isset( $query['rest_route'] ) && untrailingslashit( (string) $query['rest_route'] ) === '/batch/v1' ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Intercept.
 	 *
 	 * @param mixed           $result  Pre-dispatch result.
@@ -97,6 +130,9 @@ class WCAG_Gate {
 	public static function intercept( $result, $server, $request ) {
 		if ( self::$applying || is_wp_error( $result ) || null !== $result ) {
 			return $result;
+		}
+		if ( ! self::is_primary_request( $request ) ) {
+			return $result; // Internal sub-request made by server-side code, not something the integration asked for.
 		}
 		if ( ! WCAG_Summary::is_write( $request->get_method() ) ) {
 			return $result;
@@ -115,7 +151,7 @@ class WCAG_Gate {
 			return $result; // Cookie/nonce or application password: a human in wp-admin, not an integration.
 		}
 		$key = WCAG_Store::wc_key_by_consumer_key( $consumer_key );
-		if ( ! $key || (int) $key->user_id !== get_current_user_id() ) {
+		if ( ! $key || get_current_user_id() !== (int) $key->user_id ) {
 			return $result; // WooCommerce did not authenticate this key.
 		}
 		if ( ! self::is_gated( $request, $key ) ) {

@@ -112,10 +112,19 @@ class WCAG_List_Table extends WP_List_Table {
 			'failed'   => __( 'Failed', 'approval-gate-for-woocommerce' ),
 		);
 		foreach ( $all as $k => $label ) {
-			$n         = '' === $k ? array_sum( $counts ) - $counts['pending'] : $counts[ $k ];
+			$n                        = '' === $k ? array_sum( $counts ) - $counts['pending'] : $counts[ $k ];
 			$views[ $k ? $k : 'all' ] = sprintf(
 				'<a href="%s" class="%s">%s <span class="count">(%d)</span></a>',
-				esc_url( add_query_arg( array( 'page' => 'wcag', 'tab' => 'history', 'status' => $k ), admin_url( 'admin.php' ) ) ),
+				esc_url(
+					add_query_arg(
+						array(
+							'page'   => 'wcag',
+							'tab'    => 'history',
+							'status' => $k,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
 				$current === $k ? 'current' : '',
 				esc_html( $label ),
 				$n
@@ -188,7 +197,7 @@ class WCAG_List_Table extends WP_List_Table {
 		$orderby = in_array( $args['orderby'], array( 'id', 'created_at', 'risk', 'status', 'key_id' ), true ) ? $args['orderby'] : 'id';
 		$order   = 'asc' === $args['order'] ? 'ASC' : 'DESC';
 		$offset  = ( $args['page'] - 1 ) * $args['per_page'];
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$count = "SELECT COUNT(*) FROM {$table} WHERE {$w}";
 		$total = (int) $wpdb->get_var( $vals ? $wpdb->prepare( $count, $vals ) : $count );
 		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE {$w} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d", array_merge( $vals, array( $args['per_page'], $offset ) ) ) );

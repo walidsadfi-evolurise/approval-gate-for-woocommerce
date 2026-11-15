@@ -25,17 +25,33 @@ $wcag_pretty  = function ( $v ) {
 <table class="widefat striped" style="max-width:900px;margin-top:12px">
 	<tbody>
 		<tr><th style="width:160px"><?php esc_html_e( 'Request', 'approval-gate-for-woocommerce' ); ?></th><td><code><?php echo esc_html( $row->method ); ?></code> <code><?php echo esc_html( $row->route ); ?></code></td></tr>
-		<tr><th><?php esc_html_e( 'From key', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( $row->key_description ); ?> #<?php echo (int) $row->key_id; ?><?php if ( $wcag_user ) : ?> — <?php esc_html_e( 'runs as', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( $wcag_user->display_name ); ?><?php endif; ?></td></tr>
+		<tr><th><?php esc_html_e( 'From key', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( $row->key_description ); ?> #<?php echo (int) $row->key_id; ?>
+		<?php
+		if ( $wcag_user ) :
+			?>
+			— <?php esc_html_e( 'runs as', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( $wcag_user->display_name ); ?><?php endif; ?></td></tr>
 		<?php if ( $row->reason ) : ?>
 		<tr><th><?php esc_html_e( 'Reason given', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( $row->reason ); ?></td></tr>
 		<?php endif; ?>
-		<tr><th><?php esc_html_e( 'Proposed', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( get_date_from_gmt( $row->created_at, 'Y-m-d H:i:s' ) ); ?><?php if ( $row->expires_at && 'pending' === $row->status ) : ?> — <?php esc_html_e( 'expires', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( get_date_from_gmt( $row->expires_at, 'Y-m-d H:i' ) ); ?><?php endif; ?></td></tr>
+		<tr><th><?php esc_html_e( 'Proposed', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( get_date_from_gmt( $row->created_at, 'Y-m-d H:i:s' ) ); ?>
+		<?php
+		if ( $row->expires_at && 'pending' === $row->status ) :
+			?>
+			— <?php esc_html_e( 'expires', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( get_date_from_gmt( $row->expires_at, 'Y-m-d H:i' ) ); ?><?php endif; ?></td></tr>
 		<?php if ( $row->idempotency_key ) : ?>
 		<tr><th><?php esc_html_e( 'Idempotency key', 'approval-gate-for-woocommerce' ); ?></th><td><code><?php echo esc_html( $row->idempotency_key ); ?></code></td></tr>
 		<?php endif; ?>
 		<tr><th><?php esc_html_e( 'Proposal id', 'approval-gate-for-woocommerce' ); ?></th><td><code><?php echo esc_html( $row->uuid ); ?></code></td></tr>
 		<?php if ( $row->decided_at ) : ?>
-		<tr><th><?php esc_html_e( 'Decided', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( get_date_from_gmt( $row->decided_at, 'Y-m-d H:i:s' ) ); ?><?php if ( $wcag_decider ) : ?> <?php esc_html_e( 'by', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( $wcag_decider->display_name ); ?><?php endif; ?><?php if ( $row->decision_note ) : ?> — <?php echo esc_html( $row->decision_note ); ?><?php endif; ?></td></tr>
+		<tr><th><?php esc_html_e( 'Decided', 'approval-gate-for-woocommerce' ); ?></th><td><?php echo esc_html( get_date_from_gmt( $row->decided_at, 'Y-m-d H:i:s' ) ); ?>
+			<?php
+			if ( $wcag_decider ) :
+				?>
+				<?php esc_html_e( 'by', 'approval-gate-for-woocommerce' ); ?> <?php echo esc_html( $wcag_decider->display_name ); ?><?php endif; ?>
+			<?php
+			if ( $row->decision_note ) :
+				?>
+			— <?php echo esc_html( $row->decision_note ); ?><?php endif; ?></td></tr>
 		<?php endif; ?>
 	</tbody>
 </table>
