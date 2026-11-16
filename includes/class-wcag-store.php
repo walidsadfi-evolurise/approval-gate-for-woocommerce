@@ -71,7 +71,7 @@ class WCAG_Store {
 	public static function drop() {
 		global $wpdb;
 		$table = self::table();
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		delete_option( 'wcag_db_version' );
 	}
 
@@ -115,7 +115,7 @@ class WCAG_Store {
 	public static function get( $id ) {
 		global $wpdb;
 		$table = self::table();
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", (int) $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -127,7 +127,7 @@ class WCAG_Store {
 	public static function get_by_uuid( $uuid ) {
 		global $wpdb;
 		$table = self::table();
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE uuid = %s", (string) $uuid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE uuid = %s', $table, (string) $uuid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -143,49 +143,91 @@ class WCAG_Store {
 			return null;
 		}
 		$table = self::table();
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE key_id = %d AND idempotency_key = %s ORDER BY id DESC LIMIT 1", (int) $key_id, (string) $idem ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE key_id = %d AND idempotency_key = %s ORDER BY id DESC LIMIT 1', $table, (int) $key_id, (string) $idem ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
 	 * Query.
 	 *
-	 * @param array $args status, key_id, risk, search, per_page, page, orderby, order.
+	 * @param array $args status, not_pending, key_id, risk, search, per_page, page, orderby, order.
 	 * @return array rows, total
 	 */
 	public static function query( array $args ) {
 		global $wpdb;
-		$table = self::table();
-		$where = array( '1=1' );
-		$vals  = array();
-		if ( ! empty( $args['status'] ) ) {
-			$where[] = 'status = %s';
-			$vals[]  = $args['status'];
-		}
-		if ( ! empty( $args['key_id'] ) ) {
-			$where[] = 'key_id = %d';
-			$vals[]  = (int) $args['key_id'];
-		}
-		if ( ! empty( $args['risk'] ) ) {
-			$where[] = 'risk = %s';
-			$vals[]  = $args['risk'];
-		}
-		if ( ! empty( $args['search'] ) ) {
-			$like    = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$where[] = '(summary LIKE %s OR route LIKE %s OR key_description LIKE %s)';
-			array_push( $vals, $like, $like, $like );
-		}
-		$where_sql = implode( ' AND ', $where );
-		$per_page  = max( 1, isset( $args['per_page'] ) ? (int) $args['per_page'] : 20 );
-		$page      = max( 1, isset( $args['page'] ) ? (int) $args['page'] : 1 );
-		$orderby   = in_array( isset( $args['orderby'] ) ? $args['orderby'] : '', array( 'id', 'created_at', 'risk', 'status', 'key_id' ), true ) ? $args['orderby'] : 'id';
-		$order     = isset( $args['order'] ) && 'asc' === strtolower( $args['order'] ) ? 'ASC' : 'DESC';
-		$offset    = ( $page - 1 ) * $per_page;
+		$table       = self::table();
+		$status      = isset( $args['status'] ) ? (string) $args['status'] : '';
+		$not_pending = empty( $args['not_pending'] ) ? 0 : 1;
+		$key_id      = isset( $args['key_id'] ) ? (int) $args['key_id'] : 0;
+		$risk        = isset( $args['risk'] ) ? (string) $args['risk'] : '';
+		$search      = isset( $args['search'] ) ? (string) $args['search'] : '';
+		$like        = '%' . $wpdb->esc_like( $search ) . '%';
+		$per_page    = max( 1, isset( $args['per_page'] ) ? (int) $args['per_page'] : 20 );
+		$page        = max( 1, isset( $args['page'] ) ? (int) $args['page'] : 1 );
+		$orderby     = in_array( isset( $args['orderby'] ) ? $args['orderby'] : '', array( 'id', 'created_at', 'risk', 'status', 'key_id' ), true ) ? $args['orderby'] : 'id';
+		$offset      = ( $page - 1 ) * $per_page;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}";
-		$rows_sql  = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$total     = (int) $wpdb->get_var( $vals ? $wpdb->prepare( $count_sql, $vals ) : $count_sql );
-		$rows      = $wpdb->get_results( $wpdb->prepare( $rows_sql, array_merge( $vals, array( $per_page, $offset ) ) ) );
+		// Every filter is always present and switched off by its own empty value, so the SQL text is fixed.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i WHERE ( %s = '' OR status = %s ) AND ( %d = 0 OR status <> 'pending' ) AND ( %d = 0 OR key_id = %d ) AND ( %s = '' OR risk = %s ) AND ( %s = '' OR summary LIKE %s OR route LIKE %s OR key_description LIKE %s )",
+				$table,
+				$status,
+				$status,
+				$not_pending,
+				$key_id,
+				$key_id,
+				$risk,
+				$risk,
+				$search,
+				$like,
+				$like,
+				$like
+			)
+		);
+		if ( isset( $args['order'] ) && 'asc' === strtolower( (string) $args['order'] ) ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE ( %s = '' OR status = %s ) AND ( %d = 0 OR status <> 'pending' ) AND ( %d = 0 OR key_id = %d ) AND ( %s = '' OR risk = %s ) AND ( %s = '' OR summary LIKE %s OR route LIKE %s OR key_description LIKE %s ) ORDER BY %i ASC LIMIT %d OFFSET %d",
+					$table,
+					$status,
+					$status,
+					$not_pending,
+					$key_id,
+					$key_id,
+					$risk,
+					$risk,
+					$search,
+					$like,
+					$like,
+					$like,
+					$orderby,
+					$per_page,
+					$offset
+				)
+			);
+		} else {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM %i WHERE ( %s = '' OR status = %s ) AND ( %d = 0 OR status <> 'pending' ) AND ( %d = 0 OR key_id = %d ) AND ( %s = '' OR risk = %s ) AND ( %s = '' OR summary LIKE %s OR route LIKE %s OR key_description LIKE %s ) ORDER BY %i DESC LIMIT %d OFFSET %d",
+					$table,
+					$status,
+					$status,
+					$not_pending,
+					$key_id,
+					$key_id,
+					$risk,
+					$risk,
+					$search,
+					$like,
+					$like,
+					$like,
+					$orderby,
+					$per_page,
+					$offset
+				)
+			);
+		}
 		// phpcs:enable
 		return array(
 			'rows'  => $rows ? $rows : array(),
@@ -201,7 +243,7 @@ class WCAG_Store {
 	public static function counts() {
 		global $wpdb;
 		$table = self::table();
-		$rows  = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS n FROM %i GROUP BY status', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$out   = array(
 			'pending'  => 0,
 			'approved' => 0,
@@ -224,7 +266,7 @@ class WCAG_Store {
 		global $wpdb;
 		$table = self::table();
 		$now   = current_time( 'mysql', true );
-		return (int) $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET status = 'expired', decided_at = %s WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < %s", $now, $now ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'expired', decided_at = %s WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at < %s", $table, $now, $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -237,7 +279,7 @@ class WCAG_Store {
 		global $wpdb;
 		$table  = self::table();
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - max( 1, (int) $days ) * DAY_IN_SECONDS );
-		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE status <> 'pending' AND created_at < %s", $cutoff ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE status <> 'pending' AND created_at < %s", $table, $cutoff ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

@@ -154,57 +154,15 @@ class WCAG_List_Table extends WP_List_Table {
 			'order'    => isset( $_GET['order'] ) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : ( 'pending' === $this->status ? 'asc' : 'desc' ),
 		);
 		// phpcs:enable
-		if ( '' === $status ) {
-			// History: everything except pending. Emulate with a NOT by querying all and filtering is wasteful; use separate statuses.
-			$res = $this->query_not_pending( $args );
-		} else {
-			$res = WCAG_Store::query( $args );
-		}
-		$this->items = $res['rows'];
+		// History ('' status) lists every decided proposal, i.e. everything except pending.
+		$args['not_pending'] = '' === $status;
+		$res                 = WCAG_Store::query( $args );
+		$this->items         = $res['rows'];
 		$this->set_pagination_args(
 			array(
 				'total_items' => $res['total'],
 				'per_page'    => $per_page,
 			)
-		);
-	}
-
-	/**
-	 * History query (status <> pending).
-	 *
-	 * @param array $args Args.
-	 * @return array
-	 */
-	private function query_not_pending( array $args ) {
-		global $wpdb;
-		$table = WCAG_Store::table();
-		$where = array( "status <> 'pending'" );
-		$vals  = array();
-		if ( $args['key_id'] ) {
-			$where[] = 'key_id = %d';
-			$vals[]  = $args['key_id'];
-		}
-		if ( $args['risk'] ) {
-			$where[] = 'risk = %s';
-			$vals[]  = $args['risk'];
-		}
-		if ( $args['search'] ) {
-			$like    = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$where[] = '(summary LIKE %s OR route LIKE %s OR key_description LIKE %s)';
-			array_push( $vals, $like, $like, $like );
-		}
-		$w       = implode( ' AND ', $where );
-		$orderby = in_array( $args['orderby'], array( 'id', 'created_at', 'risk', 'status', 'key_id' ), true ) ? $args['orderby'] : 'id';
-		$order   = 'asc' === $args['order'] ? 'ASC' : 'DESC';
-		$offset  = ( $args['page'] - 1 ) * $args['per_page'];
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-		$count = "SELECT COUNT(*) FROM {$table} WHERE {$w}";
-		$total = (int) $wpdb->get_var( $vals ? $wpdb->prepare( $count, $vals ) : $count );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE {$w} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d", array_merge( $vals, array( $args['per_page'], $offset ) ) ) );
-		// phpcs:enable
-		return array(
-			'rows'  => $rows ? $rows : array(),
-			'total' => $total,
 		);
 	}
 

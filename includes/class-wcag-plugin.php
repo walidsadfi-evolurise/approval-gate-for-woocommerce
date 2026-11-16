@@ -42,8 +42,6 @@ class WCAG_Plugin {
 			return;
 		}
 
-		load_plugin_textdomain( 'approval-gate-for-woocommerce', false, dirname( plugin_basename( WCAG_FILE ) ) . '/languages' );
-
 		if ( get_option( 'wcag_db_version' ) !== WCAG_Store::DB_VERSION ) {
 			WCAG_Store::install();
 		}
