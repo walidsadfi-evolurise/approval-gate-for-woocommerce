@@ -12,8 +12,8 @@ if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 	define( 'DAY_IN_SECONDS', 86400 );
 }
 
-require_once __DIR__ . '/../includes/class-wcag-summary.php';
-require_once __DIR__ . '/../includes/class-wcag-settings.php';
+require_once __DIR__ . '/../includes/class-evoag-summary.php';
+require_once __DIR__ . '/../includes/class-evoag-settings.php';
 
 if ( ! function_exists( 'get_option' ) ) {
 	/**
@@ -24,7 +24,7 @@ if ( ! function_exists( 'get_option' ) ) {
 	 * @return mixed
 	 */
 	function get_option( $key, $default = false ) {
-		return isset( $GLOBALS['wcag_test_options'][ $key ] ) ? $GLOBALS['wcag_test_options'][ $key ] : $default;
+		return isset( $GLOBALS['evoag_test_options'][ $key ] ) ? $GLOBALS['evoag_test_options'][ $key ] : $default;
 	}
 }
 if ( ! function_exists( 'sanitize_email' ) ) {

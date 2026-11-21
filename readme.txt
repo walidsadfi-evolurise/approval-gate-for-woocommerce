@@ -1,4 +1,4 @@
-=== Approval Gate for WooCommerce ===
+=== Evolurise Approval Gate for WooCommerce ===
 Contributors: evolurise
 Tags: woocommerce, rest api, ai agents, approval, automation
 Requires at least: 6.4
@@ -36,7 +36,7 @@ AI agents are good at *proposing* changes and bad at being trusted blindly. Most
 * **Summary & risk** — the reviewer sees what matters in two seconds; deletes, refunds, settings, webhooks and customers are *high*; prices and statuses *medium*.
 * **Reason header** — `X-WC-Approval-Reason: competitor dropped price` is shown to the reviewer.
 * **Idempotency-Key** — resending the same request yields the same proposal, not a duplicate.
-* **Bulk approve / reject**, a note sent back to the integration, admin bar badge, email on new proposals, Slack-compatible webhook on created / approved / rejected / failed.
+* **Bulk approve / reject**, a note sent back to the integration, pending count in the WooCommerce menu, email on new proposals, Slack-compatible webhook on created / approved / rejected / failed.
 * **Expiry** — unreviewed proposals expire (default 7 days) and can never be applied by accident later.
 * **WP-CLI** — `wp wc approval-gate list|show|approve|reject|gate|stats`.
 * **REST** — `GET /wc/v3/approval-gate/proposals` and `/{id}`, scoped to the calling key.
@@ -48,10 +48,10 @@ Pairs with [Scoped API Keys for WooCommerce](https://github.com/walidsadfi-evolu
 
 = Hooks =
 
-* `wcag_is_gated( $gated, $key, $request )` — decide per request (e.g. gate only orders over 500).
-* `wcag_proposal_created( $row, $request )`
-* `wcag_proposal_decided( $row, $response|null )`
-* `wcag_webhook_payload( $payload, $row )`
+* `evoag_is_gated( $gated, $key, $request )` — decide per request (e.g. gate only orders over 500).
+* `evoag_proposal_created( $row, $request )`
+* `evoag_proposal_decided( $row, $response|null )`
+* `evoag_webhook_payload( $payload, $row )`
 
 == Installation ==
 
@@ -80,7 +80,7 @@ No. Only requests authenticated with a consumer key on `/wc/v3/*` writes to the 
 
 = Can I gate only some situations? =
 
-Use the `wcag_is_gated` filter, e.g. require approval for refunds above an amount, or only outside business hours.
+Use the `evoag_is_gated` filter, e.g. require approval for refunds above an amount, or only outside business hours.
 
 == Screenshots ==
 

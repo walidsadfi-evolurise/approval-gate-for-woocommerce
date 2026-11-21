@@ -8,7 +8,7 @@
 use PHPUnit\Framework\TestCase;
 
 /**
- * WCAG_Settings.
+ * EVOAG_Settings.
  */
 class SettingsTest extends TestCase {
 
@@ -16,17 +16,17 @@ class SettingsTest extends TestCase {
 	 * Defaults when nothing saved.
 	 */
 	public function test_defaults() {
-		$GLOBALS['wcag_test_options'] = array();
-		$this->assertSame( 7, WCAG_Settings::get( 'expire_days' ) );
-		$this->assertSame( array(), WCAG_Settings::get( 'gated_keys' ) );
-		$this->assertContains( 'orders', WCAG_Settings::get( 'resources' ) );
+		$GLOBALS['evoag_test_options'] = array();
+		$this->assertSame( 7, EVOAG_Settings::get( 'expire_days' ) );
+		$this->assertSame( array(), EVOAG_Settings::get( 'gated_keys' ) );
+		$this->assertContains( 'orders', EVOAG_Settings::get( 'resources' ) );
 	}
 
 	/**
 	 * Sanitize clamps and filters.
 	 */
 	public function test_sanitize() {
-		$s = WCAG_Settings::sanitize(
+		$s = EVOAG_Settings::sanitize(
 			array(
 				'gated_keys'     => array( '3', 3, 'x', 7 ),
 				'resources'      => array( 'orders', 'bogus', 'coupons' ),
@@ -49,8 +49,8 @@ class SettingsTest extends TestCase {
 	 * Saved values merge over defaults.
 	 */
 	public function test_merge() {
-		$GLOBALS['wcag_test_options'] = array( WCAG_Settings::OPTION => array( 'expire_days' => 2 ) );
-		$this->assertSame( 2, WCAG_Settings::get( 'expire_days' ) );
-		$this->assertSame( 1, WCAG_Settings::get( 'header_opt_in' ) );
+		$GLOBALS['evoag_test_options'] = array( EVOAG_Settings::OPTION => array( 'expire_days' => 2 ) );
+		$this->assertSame( 2, EVOAG_Settings::get( 'expire_days' ) );
+		$this->assertSame( 1, EVOAG_Settings::get( 'header_opt_in' ) );
 	}
 }

@@ -10,21 +10,21 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Wires everything together once WooCommerce is loaded.
  */
-class WCAG_Plugin {
+class EVOAG_Plugin {
 
-	const CRON_EXPIRE = 'wcag_expire_proposals';
+	const CRON_EXPIRE = 'evoag_expire_proposals';
 
 	/**
 	 * Singleton.
 	 *
-	 * @var WCAG_Plugin|null
+	 * @var EVOAG_Plugin|null
 	 */
 	private static $instance = null;
 
 	/**
 	 * Instance.
 	 *
-	 * @return WCAG_Plugin
+	 * @return EVOAG_Plugin
 	 */
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -42,26 +42,26 @@ class WCAG_Plugin {
 			return;
 		}
 
-		if ( get_option( 'wcag_db_version' ) !== WCAG_Store::DB_VERSION ) {
-			WCAG_Store::install();
+		if ( get_option( 'evoag_db_version' ) !== EVOAG_Store::DB_VERSION ) {
+			EVOAG_Store::install();
 		}
 
-		WCAG_Gate::init();
-		WCAG_Decision::init();
-		WCAG_Rest::init();
+		EVOAG_Gate::init();
+		EVOAG_Decision::init();
+		EVOAG_Rest::init();
 
 		if ( ! wp_next_scheduled( self::CRON_EXPIRE ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_EXPIRE );
 		}
 
 		if ( is_admin() ) {
-			require_once WCAG_DIR . 'admin/class-wcag-admin.php';
-			WCAG_Admin::init();
+			require_once EVOAG_DIR . 'admin/class-evoag-admin.php';
+			EVOAG_Admin::init();
 		}
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			require_once WCAG_DIR . 'includes/class-wcag-cli.php';
-			WP_CLI::add_command( 'wc approval-gate', 'WCAG_CLI' );
+			require_once EVOAG_DIR . 'includes/class-evoag-cli.php';
+			WP_CLI::add_command( 'wc approval-gate', 'EVOAG_CLI' );
 		}
 	}
 
@@ -69,14 +69,14 @@ class WCAG_Plugin {
 	 * Notice when WooCommerce is absent.
 	 */
 	public function missing_woocommerce_notice() {
-		echo '<div class="notice notice-error"><p>' . esc_html__( 'Approval Gate for WooCommerce needs WooCommerce 8.0 or newer to be active.', 'approval-gate-for-woocommerce' ) . '</p></div>';
+		echo '<div class="notice notice-error"><p>' . esc_html__( 'Evolurise Approval Gate for WooCommerce needs WooCommerce 8.0 or newer to be active.', 'evolurise-approval-gate-for-woocommerce' ) . '</p></div>';
 	}
 
 	/**
 	 * Activation.
 	 */
 	public static function activate() {
-		WCAG_Store::install();
+		EVOAG_Store::install();
 	}
 
 	/**

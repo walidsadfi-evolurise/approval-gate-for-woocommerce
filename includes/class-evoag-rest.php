@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  * GET /wc/v3/approval-gate/proposals/{uuid}  — the key that proposed it polls its status.
  * GET /wc/v3/approval-gate/proposals         — that key's proposals (status filter).
  */
-class WCAG_Rest {
+class EVOAG_Rest {
 
 	/**
 	 * Register.
@@ -76,11 +76,11 @@ class WCAG_Rest {
 	 * @return int
 	 */
 	private static function current_key_id() {
-		$ck = WCAG_Gate::detect_consumer_key();
+		$ck = EVOAG_Gate::detect_consumer_key();
 		if ( '' === $ck ) {
 			return 0;
 		}
-		$key = WCAG_Store::wc_key_by_consumer_key( $ck );
+		$key = EVOAG_Store::wc_key_by_consumer_key( $ck );
 		return $key && get_current_user_id() === (int) $key->user_id ? (int) $key->key_id : 0;
 	}
 
@@ -104,11 +104,11 @@ class WCAG_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function get( $request ) {
-		$row = WCAG_Store::get_by_uuid( $request['uuid'] );
+		$row = EVOAG_Store::get_by_uuid( $request['uuid'] );
 		if ( ! $row || ! self::may_see( $row ) ) {
-			return new WP_Error( 'wcag_not_found', 'Proposal not found.', array( 'status' => 404 ) );
+			return new WP_Error( 'evoag_not_found', 'Proposal not found.', array( 'status' => 404 ) );
 		}
-		return WCAG_Gate::pending_response( $row, false );
+		return EVOAG_Gate::pending_response( $row, false );
 	}
 
 	/**
@@ -127,10 +127,10 @@ class WCAG_Rest {
 		if ( $key_id ) {
 			$args['key_id'] = $key_id;
 		} elseif ( ! current_user_can( 'manage_woocommerce' ) ) {
-			return new WP_Error( 'wcag_forbidden', 'Not allowed.', array( 'status' => 403 ) );
+			return new WP_Error( 'evoag_forbidden', 'Not allowed.', array( 'status' => 403 ) );
 		}
-		$res      = WCAG_Store::query( $args );
-		$response = new WP_REST_Response( array_map( array( 'WCAG_Gate', 'public_view' ), $res['rows'] ), 200 );
+		$res      = EVOAG_Store::query( $args );
+		$response = new WP_REST_Response( array_map( array( 'EVOAG_Gate', 'public_view' ), $res['rows'] ), 200 );
 		$response->header( 'X-WP-Total', (string) $res['total'] );
 		$response->header( 'X-WP-TotalPages', (string) ceil( $res['total'] / max( 1, $args['per_page'] ) ) );
 		return $response;

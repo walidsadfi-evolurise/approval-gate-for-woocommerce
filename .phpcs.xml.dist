@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="Approval Gate">
-    <description>WordPress coding standards for Approval Gate for WooCommerce.</description>
+    <description>WordPress coding standards for Evolurise Approval Gate for WooCommerce.</description>
     <file>.</file>
     <exclude-pattern>/vendor/*</exclude-pattern>
     <exclude-pattern>/node_modules/*</exclude-pattern>
@@ -16,12 +16,12 @@
     <rule ref="PHPCompatibilityWP"/>
     <rule ref="WordPress.WP.I18n">
         <properties>
-            <property name="text_domain" type="array"><element value="approval-gate-for-woocommerce"/></property>
+            <property name="text_domain" type="array"><element value="evolurise-approval-gate-for-woocommerce"/></property>
         </properties>
     </rule>
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <properties>
-            <property name="prefixes" type="array"><element value="wcag"/><element value="WCAG"/></property>
+            <property name="prefixes" type="array"><element value="evoag"/><element value="EVOAG"/></property>
         </properties>
     </rule>
     <rule ref="WordPress.WP.Capabilities">

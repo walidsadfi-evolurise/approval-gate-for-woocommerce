@@ -14,7 +14,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 /**
  * Queue / history.
  */
-class WCAG_List_Table extends WP_List_Table {
+class EVOAG_List_Table extends WP_List_Table {
 
 	/**
 	 * Fixed status filter ('' = all).
@@ -47,17 +47,17 @@ class WCAG_List_Table extends WP_List_Table {
 	public function get_columns() {
 		$cols = array(
 			'cb'         => '<input type="checkbox" />',
-			'summary'    => __( 'Proposed change', 'approval-gate-for-woocommerce' ),
-			'risk'       => __( 'Risk', 'approval-gate-for-woocommerce' ),
-			'key'        => __( 'From key', 'approval-gate-for-woocommerce' ),
-			'request'    => __( 'Request', 'approval-gate-for-woocommerce' ),
-			'created_at' => __( 'Proposed', 'approval-gate-for-woocommerce' ),
+			'summary'    => __( 'Proposed change', 'evolurise-approval-gate-for-woocommerce' ),
+			'risk'       => __( 'Risk', 'evolurise-approval-gate-for-woocommerce' ),
+			'key'        => __( 'From key', 'evolurise-approval-gate-for-woocommerce' ),
+			'request'    => __( 'Request', 'evolurise-approval-gate-for-woocommerce' ),
+			'created_at' => __( 'Proposed', 'evolurise-approval-gate-for-woocommerce' ),
 		);
 		if ( 'pending' === $this->status ) {
-			$cols['expires_at'] = __( 'Expires', 'approval-gate-for-woocommerce' );
+			$cols['expires_at'] = __( 'Expires', 'evolurise-approval-gate-for-woocommerce' );
 		} else {
-			$cols['status']  = __( 'Status', 'approval-gate-for-woocommerce' );
-			$cols['decided'] = __( 'Decided', 'approval-gate-for-woocommerce' );
+			$cols['status']  = __( 'Status', 'evolurise-approval-gate-for-woocommerce' );
+			$cols['decided'] = __( 'Decided', 'evolurise-approval-gate-for-woocommerce' );
 			unset( $cols['cb'] );
 		}
 		return $cols;
@@ -87,8 +87,8 @@ class WCAG_List_Table extends WP_List_Table {
 			return array();
 		}
 		return array(
-			'bulk_approve' => __( 'Approve & apply', 'approval-gate-for-woocommerce' ),
-			'bulk_reject'  => __( 'Reject', 'approval-gate-for-woocommerce' ),
+			'bulk_approve' => __( 'Approve & apply', 'evolurise-approval-gate-for-woocommerce' ),
+			'bulk_reject'  => __( 'Reject', 'evolurise-approval-gate-for-woocommerce' ),
 		);
 	}
 
@@ -103,13 +103,13 @@ class WCAG_List_Table extends WP_List_Table {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
-		$counts  = WCAG_Store::counts();
+		$counts  = EVOAG_Store::counts();
 		$views   = array();
-		$all     = array( '' => __( 'All', 'approval-gate-for-woocommerce' ) ) + array(
-			'approved' => __( 'Approved', 'approval-gate-for-woocommerce' ),
-			'rejected' => __( 'Rejected', 'approval-gate-for-woocommerce' ),
-			'expired'  => __( 'Expired', 'approval-gate-for-woocommerce' ),
-			'failed'   => __( 'Failed', 'approval-gate-for-woocommerce' ),
+		$all     = array( '' => __( 'All', 'evolurise-approval-gate-for-woocommerce' ) ) + array(
+			'approved' => __( 'Approved', 'evolurise-approval-gate-for-woocommerce' ),
+			'rejected' => __( 'Rejected', 'evolurise-approval-gate-for-woocommerce' ),
+			'expired'  => __( 'Expired', 'evolurise-approval-gate-for-woocommerce' ),
+			'failed'   => __( 'Failed', 'evolurise-approval-gate-for-woocommerce' ),
 		);
 		foreach ( $all as $k => $label ) {
 			$n                        = '' === $k ? array_sum( $counts ) - $counts['pending'] : $counts[ $k ];
@@ -118,7 +118,7 @@ class WCAG_List_Table extends WP_List_Table {
 				esc_url(
 					add_query_arg(
 						array(
-							'page'   => 'wcag',
+							'page'   => 'evoag',
 							'tab'    => 'history',
 							'status' => $k,
 						),
@@ -156,7 +156,7 @@ class WCAG_List_Table extends WP_List_Table {
 		// phpcs:enable
 		// History ('' status) lists every decided proposal, i.e. everything except pending.
 		$args['not_pending'] = '' === $status;
-		$res                 = WCAG_Store::query( $args );
+		$res                 = EVOAG_Store::query( $args );
 		$this->items         = $res['rows'];
 		$this->set_pagination_args(
 			array(
@@ -183,15 +183,15 @@ class WCAG_List_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_summary( $item ) {
-		$view = admin_url( 'admin.php?page=wcag&proposal=' . (int) $item->id );
+		$view = admin_url( 'admin.php?page=evoag&proposal=' . (int) $item->id );
 		$out  = '<strong><a href="' . esc_url( $view ) . '">' . esc_html( $item->summary ) . '</a></strong>';
 		if ( $item->reason ) {
 			$out .= '<br><em style="color:#555">' . esc_html( mb_substr( $item->reason, 0, 140 ) ) . '</em>';
 		}
-		$actions = array( 'view' => '<a href="' . esc_url( $view ) . '">' . esc_html__( 'Inspect payload', 'approval-gate-for-woocommerce' ) . '</a>' );
+		$actions = array( 'view' => '<a href="' . esc_url( $view ) . '">' . esc_html__( 'Inspect payload', 'evolurise-approval-gate-for-woocommerce' ) . '</a>' );
 		if ( 'pending' === $item->status ) {
-			$actions['approve'] = sprintf( '<a href="#" class="wcag-quick" data-do="approve" data-id="%d" style="color:#2e7d32">%s</a>', (int) $item->id, esc_html__( 'Approve & apply', 'approval-gate-for-woocommerce' ) );
-			$actions['reject']  = sprintf( '<a href="#" class="wcag-quick" data-do="reject" data-id="%d" style="color:#c62828">%s</a>', (int) $item->id, esc_html__( 'Reject', 'approval-gate-for-woocommerce' ) );
+			$actions['approve'] = sprintf( '<a href="#" class="evoag-quick" data-do="approve" data-id="%d" style="color:#2e7d32">%s</a>', (int) $item->id, esc_html__( 'Approve & apply', 'evolurise-approval-gate-for-woocommerce' ) );
+			$actions['reject']  = sprintf( '<a href="#" class="evoag-quick" data-do="reject" data-id="%d" style="color:#c62828">%s</a>', (int) $item->id, esc_html__( 'Reject', 'evolurise-approval-gate-for-woocommerce' ) );
 		}
 		return $out . $this->row_actions( $actions );
 	}
@@ -206,23 +206,23 @@ class WCAG_List_Table extends WP_List_Table {
 	public function column_default( $item, $column ) {
 		switch ( $column ) {
 			case 'risk':
-				return WCAG_Admin::risk_badge( $item->risk );
+				return EVOAG_Admin::risk_badge( $item->risk );
 			case 'status':
-				return WCAG_Admin::status_badge( $item->status );
+				return EVOAG_Admin::status_badge( $item->status );
 			case 'key':
 				return esc_html( $item->key_description ) . ' <span style="color:#888">#' . (int) $item->key_id . '</span>';
 			case 'request':
 				return '<code>' . esc_html( $item->method ) . '</code> <code>' . esc_html( $item->route ) . '</code>';
 			case 'created_at':
 				/* translators: %s: human time diff */
-				return esc_html( sprintf( __( '%s ago', 'approval-gate-for-woocommerce' ), human_time_diff( strtotime( $item->created_at . ' UTC' ) ) ) );
+				return esc_html( sprintf( __( '%s ago', 'evolurise-approval-gate-for-woocommerce' ), human_time_diff( strtotime( $item->created_at . ' UTC' ) ) ) );
 			case 'expires_at':
 				if ( ! $item->expires_at ) {
 					return '—';
 				}
 				$in = strtotime( $item->expires_at . ' UTC' ) - time();
 				/* translators: %s: human time diff */
-				return $in > 0 ? esc_html( sprintf( __( 'in %s', 'approval-gate-for-woocommerce' ), human_time_diff( time(), time() + $in ) ) ) : esc_html__( 'now', 'approval-gate-for-woocommerce' );
+				return $in > 0 ? esc_html( sprintf( __( 'in %s', 'evolurise-approval-gate-for-woocommerce' ), human_time_diff( time(), time() + $in ) ) ) : esc_html__( 'now', 'evolurise-approval-gate-for-woocommerce' );
 			case 'decided':
 				if ( ! $item->decided_at ) {
 					return '—';
@@ -245,9 +245,9 @@ class WCAG_List_Table extends WP_List_Table {
 	 */
 	public function no_items() {
 		if ( 'pending' === $this->status ) {
-			esc_html_e( 'Nothing to approve. Writes from gated keys will appear here.', 'approval-gate-for-woocommerce' );
+			esc_html_e( 'Nothing to approve. Writes from gated keys will appear here.', 'evolurise-approval-gate-for-woocommerce' );
 		} else {
-			esc_html_e( 'No decided proposals yet.', 'approval-gate-for-woocommerce' );
+			esc_html_e( 'No decided proposals yet.', 'evolurise-approval-gate-for-woocommerce' );
 		}
 	}
 }

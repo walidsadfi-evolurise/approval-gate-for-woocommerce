@@ -1,0 +1,23 @@
+/* Evolurise Approval Gate for WooCommerce: review queue and proposal screens. */
+.evoag-wrap .column-risk,
+.evoag-wrap .column-status {
+	width: 70px;
+}
+
+.evoag-wrap .column-created_at,
+.evoag-wrap .column-expires_at {
+	width: 110px;
+}
+
+.evoag-wrap .column-key {
+	width: 160px;
+}
+
+.evoag-wrap .column-request code {
+	font-size: 11px;
+}
+
+.evoag-wrap #evoag-note {
+	width: 100%;
+	max-width: 480px;
+}

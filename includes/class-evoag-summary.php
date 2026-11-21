@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Turns (method, route, body) into something a reviewer can read in two seconds.
  */
-class WCAG_Summary {
+class EVOAG_Summary {
 
 	/**
 	 * Resources the gate can cover.

@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * WP-CLI commands: wp wc approval-gate <command>.
  */
-class WCAG_CLI {
+class EVOAG_CLI {
 
 	/**
 	 * List proposals.
@@ -38,7 +38,7 @@ class WCAG_CLI {
 	 * @param array $assoc_args Assoc.
 	 */
 	public function list( $args, $assoc_args ) {
-		$res  = WCAG_Store::query(
+		$res  = EVOAG_Store::query(
 			array(
 				'status'   => isset( $assoc_args['status'] ) ? $assoc_args['status'] : 'pending',
 				'key_id'   => isset( $assoc_args['key'] ) ? (int) $assoc_args['key'] : 0,
@@ -74,7 +74,7 @@ class WCAG_CLI {
 	 */
 	public function show( $args ) {
 		$row = $this->row( $args[0] );
-		WP_CLI::print_value( WCAG_Gate::public_view( $row ), array( 'format' => 'json' ) );
+		WP_CLI::print_value( EVOAG_Gate::public_view( $row ), array( 'format' => 'json' ) );
 		WP_CLI::line( '' );
 		WP_CLI::line( 'Body:' );
 		WP_CLI::line( wp_json_encode( json_decode( (string) $row->body, true ), JSON_PRETTY_PRINT ) );
@@ -97,7 +97,7 @@ class WCAG_CLI {
 	public function approve( $args, $assoc_args ) {
 		foreach ( $args as $id ) {
 			$row = $this->row( $id );
-			$res = WCAG_Decision::approve( (int) $row->id, get_current_user_id(), isset( $assoc_args['note'] ) ? $assoc_args['note'] : 'wp-cli' );
+			$res = EVOAG_Decision::approve( (int) $row->id, get_current_user_id(), isset( $assoc_args['note'] ) ? $assoc_args['note'] : 'wp-cli' );
 			if ( is_wp_error( $res ) ) {
 				WP_CLI::warning( "#{$row->id}: " . $res->get_error_message() );
 			} else {
@@ -123,7 +123,7 @@ class WCAG_CLI {
 	public function reject( $args, $assoc_args ) {
 		foreach ( $args as $id ) {
 			$row = $this->row( $id );
-			$res = WCAG_Decision::reject( (int) $row->id, get_current_user_id(), isset( $assoc_args['note'] ) ? $assoc_args['note'] : 'wp-cli' );
+			$res = EVOAG_Decision::reject( (int) $row->id, get_current_user_id(), isset( $assoc_args['note'] ) ? $assoc_args['note'] : 'wp-cli' );
 			if ( is_wp_error( $res ) ) {
 				WP_CLI::warning( "#{$row->id}: " . $res->get_error_message() );
 			} else {
@@ -148,10 +148,10 @@ class WCAG_CLI {
 	 */
 	public function gate( $args, $assoc_args ) {
 		$key_id = (int) $args[0];
-		if ( ! WCAG_Store::wc_key( $key_id ) ) {
+		if ( ! EVOAG_Store::wc_key( $key_id ) ) {
 			WP_CLI::error( "No WooCommerce API key #{$key_id}." );
 		}
-		$settings = WCAG_Settings::all();
+		$settings = EVOAG_Settings::all();
 		$keys     = array_map( 'intval', (array) $settings['gated_keys'] );
 		if ( isset( $assoc_args['off'] ) ) {
 			$keys = array_values( array_diff( $keys, array( $key_id ) ) );
@@ -159,7 +159,7 @@ class WCAG_CLI {
 			$keys[] = $key_id;
 		}
 		$settings['gated_keys'] = $keys;
-		update_option( WCAG_Settings::OPTION, WCAG_Settings::sanitize( $settings ) );
+		update_option( EVOAG_Settings::OPTION, EVOAG_Settings::sanitize( $settings ) );
 		WP_CLI::success( isset( $assoc_args['off'] ) ? "Key #{$key_id} writes directly again." : "Key #{$key_id} is in proposal mode." );
 	}
 
@@ -167,7 +167,7 @@ class WCAG_CLI {
 	 * Counts per status.
 	 */
 	public function stats() {
-		foreach ( WCAG_Store::counts() as $status => $n ) {
+		foreach ( EVOAG_Store::counts() as $status => $n ) {
 			WP_CLI::line( sprintf( '%-9s %d', $status, $n ) );
 		}
 	}
@@ -179,7 +179,7 @@ class WCAG_CLI {
 	 * @return object
 	 */
 	private function row( $id ) {
-		$row = is_numeric( $id ) ? WCAG_Store::get( (int) $id ) : WCAG_Store::get_by_uuid( $id );
+		$row = is_numeric( $id ) ? EVOAG_Store::get( (int) $id ) : EVOAG_Store::get_by_uuid( $id );
 		if ( ! $row ) {
 			WP_CLI::error( "No proposal {$id}." );
 		}

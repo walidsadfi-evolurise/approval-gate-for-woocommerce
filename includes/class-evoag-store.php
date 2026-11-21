@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * One row per proposed write.
  */
-class WCAG_Store {
+class EVOAG_Store {
 
 	const DB_VERSION = '1';
 
@@ -21,7 +21,7 @@ class WCAG_Store {
 	 */
 	public static function table() {
 		global $wpdb;
-		return $wpdb->prefix . 'wcag_proposals';
+		return $wpdb->prefix . 'evoag_proposals';
 	}
 
 	/**
@@ -62,7 +62,7 @@ class WCAG_Store {
 			KEY idem (key_id, idempotency_key(80))
 		) {$charset};";
 		dbDelta( $sql );
-		update_option( 'wcag_db_version', self::DB_VERSION, false );
+		update_option( 'evoag_db_version', self::DB_VERSION, false );
 	}
 
 	/**
@@ -72,7 +72,7 @@ class WCAG_Store {
 		global $wpdb;
 		$table = self::table();
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		delete_option( 'wcag_db_version' );
+		delete_option( 'evoag_db_version' );
 	}
 
 	/**

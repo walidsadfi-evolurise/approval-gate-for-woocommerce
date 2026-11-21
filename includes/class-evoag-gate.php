@@ -10,10 +10,10 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Runs after WooCommerce authenticated the key and checked read/write permission, before the controller.
  */
-class WCAG_Gate {
+class EVOAG_Gate {
 
 	/**
-	 * True while WCAG_Decision replays an approved proposal: the gate must let it through.
+	 * True while EVOAG_Decision replays an approved proposal: the gate must let it through.
 	 *
 	 * @var bool
 	 */
@@ -70,7 +70,7 @@ class WCAG_Gate {
 	 * @return bool
 	 */
 	public static function is_gated( $request, $key ) {
-		$settings = WCAG_Settings::all();
+		$settings = EVOAG_Settings::all();
 		$gated    = in_array( (int) $key->key_id, array_map( 'intval', (array) $settings['gated_keys'] ), true );
 		if ( ! $gated && $settings['header_opt_in'] ) {
 			$h     = strtolower( trim( (string) $request->get_header( 'x-wc-approval' ) ) );
@@ -83,7 +83,7 @@ class WCAG_Gate {
 		 * @param object          $key     WooCommerce key row.
 		 * @param WP_REST_Request $request Request.
 		 */
-		return (bool) apply_filters( 'wcag_is_gated', $gated, $key, $request );
+		return (bool) apply_filters( 'evoag_is_gated', $gated, $key, $request );
 	}
 
 	/**
@@ -134,12 +134,12 @@ class WCAG_Gate {
 		if ( ! self::is_primary_request( $request ) ) {
 			return $result; // Internal sub-request made by server-side code, not something the integration asked for.
 		}
-		if ( ! WCAG_Summary::is_write( $request->get_method() ) ) {
+		if ( ! EVOAG_Summary::is_write( $request->get_method() ) ) {
 			return $result;
 		}
 		$route  = $request->get_route();
-		$parsed = WCAG_Summary::parse( $route );
-		if ( ! $parsed || ! in_array( $parsed['resource'], (array) WCAG_Settings::get( 'resources' ), true ) ) {
+		$parsed = EVOAG_Summary::parse( $route );
+		if ( ! $parsed || ! in_array( $parsed['resource'], (array) EVOAG_Settings::get( 'resources' ), true ) ) {
 			return $result;
 		}
 		if ( 0 === strpos( ltrim( $route, '/' ), 'wc/v3/approval-gate' ) ) {
@@ -150,7 +150,7 @@ class WCAG_Gate {
 		if ( '' === $consumer_key ) {
 			return $result; // Cookie/nonce or application password: a human in wp-admin, not an integration.
 		}
-		$key = WCAG_Store::wc_key_by_consumer_key( $consumer_key );
+		$key = EVOAG_Store::wc_key_by_consumer_key( $consumer_key );
 		if ( ! $key || get_current_user_id() !== (int) $key->user_id ) {
 			return $result; // WooCommerce did not authenticate this key.
 		}
@@ -179,15 +179,15 @@ class WCAG_Gate {
 		$query  = $request->get_query_params();
 		$idem   = sanitize_text_field( (string) $request->get_header( 'idempotency-key' ) );
 		$reason = sanitize_textarea_field( (string) $request->get_header( 'x-wc-approval-reason' ) );
-		$parsed = WCAG_Summary::parse( $route );
+		$parsed = EVOAG_Summary::parse( $route );
 
-		$existing = WCAG_Store::find_idempotent( (int) $key->key_id, $idem );
+		$existing = EVOAG_Store::find_idempotent( (int) $key->key_id, $idem );
 		if ( $existing ) {
 			return self::pending_response( $existing, true );
 		}
 
-		$days = (int) WCAG_Settings::get( 'expire_days' );
-		$id   = WCAG_Store::insert(
+		$days = (int) EVOAG_Settings::get( 'expire_days' );
+		$id   = EVOAG_Store::insert(
 			array(
 				'key_id'          => (int) $key->key_id,
 				'key_description' => (string) $key->description,
@@ -197,8 +197,8 @@ class WCAG_Gate {
 				'resource'        => $parsed ? $parsed['resource'] : '',
 				'query_params'    => $query,
 				'body'            => $body,
-				'summary'         => mb_substr( WCAG_Summary::summarize( $method, $route, $body ), 0, 500 ),
-				'risk'            => WCAG_Summary::risk( $method, $route, $body ),
+				'summary'         => mb_substr( EVOAG_Summary::summarize( $method, $route, $body ), 0, 500 ),
+				'risk'            => EVOAG_Summary::risk( $method, $route, $body ),
 				'reason'          => $reason,
 				'idempotency_key' => '' !== $idem ? $idem : null,
 				'status'          => 'pending',
@@ -208,13 +208,13 @@ class WCAG_Gate {
 		if ( ! $id ) {
 			return new WP_REST_Response(
 				array(
-					'code'    => 'wcag_store_failed',
+					'code'    => 'evoag_store_failed',
 					'message' => 'Could not store the proposal.',
 				),
 				500
 			);
 		}
-		$row = WCAG_Store::get( $id );
+		$row = EVOAG_Store::get( $id );
 
 		/**
 		 * A proposal was created.
@@ -222,7 +222,7 @@ class WCAG_Gate {
 		 * @param object          $row     Proposal row.
 		 * @param WP_REST_Request $request Request.
 		 */
-		do_action( 'wcag_proposal_created', $row, $request );
+		do_action( 'evoag_proposal_created', $row, $request );
 
 		return self::pending_response( $row, false );
 	}
@@ -265,7 +265,7 @@ class WCAG_Gate {
 			'decided_at'  => $row->decided_at ? mysql_to_rfc3339( $row->decided_at ) : null,
 			'note'        => $row->decision_note,
 			'status_url'  => rest_url( 'wc/v3/approval-gate/proposals/' . $row->uuid ),
-			'review_url'  => admin_url( 'admin.php?page=wcag&proposal=' . (int) $row->id ),
+			'review_url'  => admin_url( 'admin.php?page=evoag&proposal=' . (int) $row->id ),
 			'result_code' => null !== $row->result_code ? (int) $row->result_code : null,
 			'result'      => null,
 		);

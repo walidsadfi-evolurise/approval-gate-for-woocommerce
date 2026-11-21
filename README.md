@@ -1,4 +1,4 @@
-# Approval Gate for WooCommerce
+# Evolurise Approval Gate for WooCommerce
 
 **Let AI agents, automations and contractors *propose* changes through the WooCommerce REST API. A human approves in wp-admin; only then does WooCommerce apply the change.**
 
@@ -32,7 +32,7 @@ X-WC-Approval-Status: pending
   "id": "5f1c…", "status": "pending",
   "summary": "update product #9 (regular_price: 19.90)", "risk": "medium",
   "status_url": "…/wc/v3/approval-gate/proposals/5f1c…",
-  "review_url": "…/wp-admin/admin.php?page=wcag&proposal=42",
+  "review_url": "…/wp-admin/admin.php?page=evoag&proposal=42",
   "expires_at": "2026-11-20T10:00:00"
 }
 ```
@@ -73,16 +73,16 @@ Or **WooCommerce → Approval Gate → Keys**, tick the key, save.
 ```
 determine_current_user ─ WooCommerce validates consumer key + secret        (unchanged)
 rest_pre_dispatch @10  ─ WooCommerce checks the key's read/write permission  (unchanged)
-rest_pre_dispatch @25  ─ WCAG_Gate: write on a gated resource from a gated key?
+rest_pre_dispatch @25  ─ EVOAG_Gate: write on a gated resource from a gated key?
                            → store {method, route, query, body, summary, risk}
                            → return 202 + status URL           (controller never runs)
 ──────────────── later, in wp-admin ────────────────
-approve                ─ WCAG_Decision: wp_set_current_user(key owner)
+approve                ─ EVOAG_Decision: wp_set_current_user(key owner)
                            rest_do_request(stored request)      (WooCommerce runs it)
                            store response, notify, webhook
 ```
 
-Hooks: `wcag_is_gated( $gated, $key, $request )` to gate conditionally (refunds above an amount, outside office hours…), `wcag_proposal_created`, `wcag_proposal_decided`, `wcag_webhook_payload`.
+Hooks: `evoag_is_gated( $gated, $key, $request )` to gate conditionally (refunds above an amount, outside office hours…), `evoag_proposal_created`, `evoag_proposal_decided`, `evoag_webhook_payload`.
 
 ## The trio
 

@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * One option row.
  */
-class WCAG_Settings {
+class EVOAG_Settings {
 
-	const OPTION = 'wcag_settings';
+	const OPTION = 'evoag_settings';
 
 	/**
 	 * Defaults.
@@ -62,7 +62,7 @@ class WCAG_Settings {
 	 */
 	public static function sanitize( $raw ) {
 		$raw   = is_array( $raw ) ? $raw : array();
-		$valid = array_keys( WCAG_Summary::resources() );
+		$valid = array_keys( EVOAG_Summary::resources() );
 		return array(
 			'gated_keys'     => isset( $raw['gated_keys'] ) ? array_values( array_unique( array_map( 'intval', (array) $raw['gated_keys'] ) ) ) : array(),
 			'header_opt_in'  => empty( $raw['header_opt_in'] ) ? 0 : 1,
