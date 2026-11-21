@@ -7,16 +7,16 @@
  * @package ApprovalGate
  */
 
-$wcag_tests_dir = getenv( 'WP_TESTS_DIR' );
-if ( ! $wcag_tests_dir ) {
-	$wcag_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
+$evoag_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( ! $evoag_tests_dir ) {
+	$evoag_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
 }
-if ( ! file_exists( $wcag_tests_dir . '/includes/functions.php' ) ) {
-	echo "Could not find {$wcag_tests_dir}/includes/functions.php, run bin/install-wp-tests.sh first.\n";
+if ( ! file_exists( $evoag_tests_dir . '/includes/functions.php' ) ) {
+	echo "Could not find {$evoag_tests_dir}/includes/functions.php, run bin/install-wp-tests.sh first.\n";
 	exit( 1 );
 }
 
-require_once $wcag_tests_dir . '/includes/functions.php';
+require_once $evoag_tests_dir . '/includes/functions.php';
 
 // Let the WP bootstrap find the Polyfills when they are not on the Composer autoloader.
 if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) && getenv( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
@@ -34,7 +34,7 @@ tests_add_filter(
 			$wc = WP_PLUGIN_DIR . '/woocommerce/woocommerce.php';
 		}
 		require_once $wc;
-		require_once dirname( __DIR__, 2 ) . '/approval-gate-for-woocommerce.php';
+		require_once dirname( __DIR__, 2 ) . '/evolurise-approval-gate-for-woocommerce.php';
 	}
 );
 
@@ -45,10 +45,10 @@ tests_add_filter(
 		if ( class_exists( 'WC_Install' ) ) {
 			WC_Install::install();
 		}
-		WCAG_Store::install();
+		EVOAG_Store::install();
 		$GLOBALS['wp_roles'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		wp_roles();
 	}
 );
 
-require $wcag_tests_dir . '/includes/bootstrap.php';
+require $evoag_tests_dir . '/includes/bootstrap.php';

@@ -59,7 +59,7 @@ class GateIntegrationTest extends WP_UnitTestCase {
 			)
 		);
 		$this->key_id = (int) $wpdb->insert_id;
-		update_option( WCAG_Settings::OPTION, WCAG_Settings::defaults() );
+		update_option( EVOAG_Settings::OPTION, EVOAG_Settings::defaults() );
 		$_SERVER['HTTPS']         = 'on';
 		$_SERVER['PHP_AUTH_USER'] = $this->ck;
 		$_SERVER['PHP_AUTH_PW']   = $this->cs;
@@ -82,9 +82,9 @@ class GateIntegrationTest extends WP_UnitTestCase {
 	 * Gate the test key.
 	 */
 	private function gate_key() {
-		$s               = WCAG_Settings::all();
+		$s               = EVOAG_Settings::all();
 		$s['gated_keys'] = array( $this->key_id );
-		update_option( WCAG_Settings::OPTION, WCAG_Settings::sanitize( $s ) );
+		update_option( EVOAG_Settings::OPTION, EVOAG_Settings::sanitize( $s ) );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$r = $this->call( 'PUT', '/wc/v3/products/' . $p->get_id(), array( 'regular_price' => '35' ) );
 		$this->assertSame( 200, $r->get_status() );
 		$this->assertSame( '35', wc_get_product( $p->get_id() )->get_regular_price() );
-		$this->assertSame( 0, WCAG_Store::counts()['pending'] );
+		$this->assertSame( 0, EVOAG_Store::counts()['pending'] );
 	}
 
 	/**
@@ -157,7 +157,7 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$this->assertSame( 'pending', $r->get_headers()['X-WC-Approval-Status'] );
 
 		$this->assertSame( '40', wc_get_product( $p->get_id() )->get_regular_price(), 'price untouched' );
-		$row = WCAG_Store::get_by_uuid( $data['id'] );
+		$row = EVOAG_Store::get_by_uuid( $data['id'] );
 		$this->assertSame( 'competitor dropped price', $row->reason );
 		$this->assertSame( $this->key_id, (int) $row->key_id );
 	}
@@ -181,10 +181,10 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$p    = $this->product();
 		$r    = $this->call( 'PUT', '/wc/v3/products/' . $p->get_id(), array( 'regular_price' => '35', 'stock_status' => 'outofstock' ) );
 		$uuid = $r->get_data()['id'];
-		$row  = WCAG_Store::get_by_uuid( $uuid );
+		$row  = EVOAG_Store::get_by_uuid( $uuid );
 
 		$reviewer = $this->factory->user->create( array( 'role' => 'shop_manager' ) );
-		$res      = WCAG_Decision::approve( (int) $row->id, $reviewer, 'ok for the sale' );
+		$res      = EVOAG_Decision::approve( (int) $row->id, $reviewer, 'ok for the sale' );
 		$this->assertFalse( is_wp_error( $res ) );
 		$this->assertSame( 'approved', $res['status'] );
 		$this->assertSame( 200, $res['code'] );
@@ -201,9 +201,9 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$this->assertSame( '35', $poll->get_data()['result']['regular_price'] );
 
 		// Cannot approve twice.
-		$again = WCAG_Decision::approve( (int) $row->id, $reviewer );
+		$again = EVOAG_Decision::approve( (int) $row->id, $reviewer );
 		$this->assertTrue( is_wp_error( $again ) );
-		$this->assertSame( 'wcag_not_pending', $again->get_error_code() );
+		$this->assertSame( 'evoag_not_pending', $again->get_error_code() );
 	}
 
 	/**
@@ -215,8 +215,8 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$r    = $this->call( 'DELETE', '/wc/v3/products/' . $p->get_id(), null, array(), array( 'force' => 'true' ) );
 		$this->assertSame( 202, $r->get_status() );
 		$this->assertSame( 'high', $r->get_data()['risk'] );
-		$row = WCAG_Store::get_by_uuid( $r->get_data()['id'] );
-		WCAG_Decision::reject( (int) $row->id, $this->admin, 'no deletions' );
+		$row = EVOAG_Store::get_by_uuid( $r->get_data()['id'] );
+		EVOAG_Decision::reject( (int) $row->id, $this->admin, 'no deletions' );
 		$this->assertInstanceOf( 'WC_Product', wc_get_product( $p->get_id() ) );
 		$poll = $this->call( 'GET', '/wc/v3/approval-gate/proposals/' . $row->uuid );
 		$this->assertSame( 'rejected', $poll->get_data()['status'] );
@@ -238,9 +238,9 @@ class GateIntegrationTest extends WP_UnitTestCase {
 	 */
 	public function test_ungated_resource_passes() {
 		$this->gate_key();
-		$s              = WCAG_Settings::all();
+		$s              = EVOAG_Settings::all();
 		$s['resources'] = array( 'orders' );
-		update_option( WCAG_Settings::OPTION, WCAG_Settings::sanitize( $s ) );
+		update_option( EVOAG_Settings::OPTION, EVOAG_Settings::sanitize( $s ) );
 		$p = $this->product();
 		$r = $this->call( 'PUT', '/wc/v3/products/' . $p->get_id(), array( 'regular_price' => '2' ) );
 		$this->assertSame( 200, $r->get_status() );
@@ -256,7 +256,7 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$r2 = $this->call( 'PUT', '/wc/v3/products/' . $p->get_id(), array( 'regular_price' => '3' ), array( 'Idempotency-Key' => 'abc-1' ) );
 		$this->assertSame( $r1->get_data()['id'], $r2->get_data()['id'] );
 		$this->assertTrue( $r2->get_data()['duplicate_of_idempotency_key'] );
-		$this->assertSame( 1, WCAG_Store::counts()['pending'] );
+		$this->assertSame( 1, EVOAG_Store::counts()['pending'] );
 	}
 
 	/**
@@ -284,10 +284,10 @@ class GateIntegrationTest extends WP_UnitTestCase {
 		$this->gate_key();
 		$p   = $this->product();
 		$r   = $this->call( 'PUT', '/wc/v3/products/' . $p->get_id(), array( 'regular_price' => '5' ) );
-		$row = WCAG_Store::get_by_uuid( $r->get_data()['id'] );
-		WCAG_Store::update( (int) $row->id, array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ) );
-		$this->assertSame( 1, WCAG_Decision::expire() );
-		$res = WCAG_Decision::approve( (int) $row->id, $this->admin );
+		$row = EVOAG_Store::get_by_uuid( $r->get_data()['id'] );
+		EVOAG_Store::update( (int) $row->id, array( 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ) );
+		$this->assertSame( 1, EVOAG_Decision::expire() );
+		$res = EVOAG_Decision::approve( (int) $row->id, $this->admin );
 		$this->assertTrue( is_wp_error( $res ) );
 		$this->assertSame( '40', wc_get_product( $p->get_id() )->get_regular_price() );
 	}
